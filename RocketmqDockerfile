@@ -31,6 +31,5 @@ RUN chmod 777 /usr/bin/startup.sh
 
 EXPOSE 9876
 EXPOSE 10911
-EXPOSE 8080
 CMD ["startup.sh"]
 
