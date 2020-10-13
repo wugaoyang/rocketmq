@@ -1,0 +1,42 @@
+#rocketmq with console dockerfile
+FROM openjdk:8-jre-slim
+
+RUN set -eux; \
+apt-get update; \
+DEBIAN_FRONTEND=noninteractive \
+apt-get install -y --no-install-recommends \
+unzip \
+vim \
+wget; \
+rm -rf /var/lib/apt/lists/*; 
+
+ENV APP_NAME=rocketmq-all-4.7.1-bin-release
+ENV ZIP_NAME=$APP_NAME.zip
+
+#其他镜像地址：https://www.apache.org/dyn/closer.cgi?path=rocketmq/4.7.1/rocketmq-all-4.7.1-bin-release.zip
+ENV IMAGE_URL=https://mirrors.koehn.com
+ENV IMAGE_PATH=/apache/rocketmq/4.7.1/$ZIP_NAME
+RUN wget $IMAGE_URL$IMAGE_PATH
+
+RUN unzip $ZIP_NAME 
+RUN rm -f $ZIP_NAME
+RUN chmod -R 777 /$APP_NAME
+
+ENV CONSOLE_NAME=rocketmq-console-ng-2.0.0.jar
+ADD $CONSOLE_NAME /$CONSOLE_NAME
+
+RUN chmod -R 777 /$CONSOLE_NAME
+
+RUN echo "brokerIP1=127.0.0.1" > /$APP_NAME/conf/broker.properties
+RUN echo "#!/bin/bash \n" \
+"nohup /$APP_NAME/bin/mqnamesrv >>nameserver.log 2>&1 & \n" \
+"nohup /$APP_NAME/bin/mqbroker -n localhost:9876 -c /$APP_NAME/conf/broker.properties  >>broker.log 2>&1 & \n" \
+"java -jar /$CONSOLE_NAME" \
+> /usr/bin/startup.sh
+RUN chmod 777 /usr/bin/startup.sh
+
+EXPOSE 9876
+EXPOSE 10911
+EXPOSE 8080
+CMD ["startup.sh"]
+
